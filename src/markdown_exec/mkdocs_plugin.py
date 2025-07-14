@@ -37,7 +37,9 @@ class _LoggerAdapter(logging.LoggerAdapter):
         super().__init__(logger, {})
         self.prefix = prefix
 
-    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
         return f"{self.prefix}: {msg}", kwargs
 
 
@@ -52,17 +54,28 @@ patch_loggers(_get_logger)
 class MarkdownExecPluginConfig(Config):
     """Configuration of the plugin (for `mkdocs.yml`)."""
 
-    ansi = config_options.Choice(("auto", "off", "required", True, False), default="auto")
+    ansi = config_options.Choice(
+        ("auto", "off", "required", True, False), default="auto"
+    )
     """Whether the `ansi` extra is required when installing the package."""
     languages = config_options.ListOfItems(
         config_options.Choice(formatters.keys()),
         default=list(formatters.keys()),
     )
     """Which languages to enabled the extension for."""
+    auto_exec = config_options.Type(
+        (list, str),
+        default=None,
+    )
+    """Languages for which to automatically execute code blocks."""
 
 
 class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
     """MkDocs plugin to easily enable custom fences for code blocks execution."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_env_vars = {}
 
     def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
         """Configure the plugin.
@@ -88,8 +101,22 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
                 "that it is installed with the 'ansi' extra. "
                 "Install it with 'pip install markdown-exec[ansi]'.",
             )
-        self.mkdocs_config_dir = os.getenv("MKDOCS_CONFIG_DIR")
+
+        # Save original environment variables
+        self.original_env_vars = {
+            "MKDOCS_CONFIG_DIR": os.getenv("MKDOCS_CONFIG_DIR"),
+            "MARKDOWN_EXEC_AUTO": os.getenv("MARKDOWN_EXEC_AUTO"),
+        }
+
+        # Set MKDOCS_CONFIG_DIR
         os.environ["MKDOCS_CONFIG_DIR"] = os.path.dirname(config["config_file_path"])
+
+        # Handle auto_exec configuration
+        if self.config.auto_exec is not None:
+            if isinstance(self.config.auto_exec, list):
+                os.environ["MARKDOWN_EXEC_AUTO"] = ",".join(self.config.auto_exec)
+            else:
+                os.environ["MARKDOWN_EXEC_AUTO"] = str(self.config.auto_exec)
         self.languages = self.config.languages
         mdx_configs = config.setdefault("mdx_configs", {})
         superfences = mdx_configs.setdefault("pymdownx.superfences", {})
@@ -113,7 +140,9 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         config: MkDocsConfig,
         files: Files,  # noqa: ARG002
     ) -> Environment | None:
-        if self.config.ansi in ("required", True) or (self.config.ansi == "auto" and ansi_ok):
+        if self.config.ansi in ("required", True) or (
+            self.config.ansi == "auto" and ansi_ok
+        ):
             self._add_css(config, "ansi.css")
         if "pyodide" in self.languages:
             self._add_css(config, "pyodide.css")
@@ -123,15 +152,22 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
     def on_post_build(self, *, config: MkDocsConfig) -> None:  # noqa: ARG002,D102
         MarkdownConverter.counter = 0
         markdown_config.reset()
-        if self.mkdocs_config_dir is None:
-            os.environ.pop("MKDOCS_CONFIG_DIR", None)
-        else:
-            os.environ["MKDOCS_CONFIG_DIR"] = self.mkdocs_config_dir
 
-    def _add_asset(self, config: MkDocsConfig, asset_file: str, asset_type: str) -> None:
+        # Restore original environment variables
+        for var, value in self.original_env_vars.items():
+            if value is None:
+                os.environ.pop(var, None)
+            else:
+                os.environ[var] = value
+
+    def _add_asset(
+        self, config: MkDocsConfig, asset_file: str, asset_type: str
+    ) -> None:
         asset_filename = f"assets/_markdown_exec_{asset_file}"
         asset_content = Path(__file__).parent.joinpath(asset_file).read_text()
-        write_file(asset_content.encode("utf-8"), os.path.join(config.site_dir, asset_filename))
+        write_file(
+            asset_content.encode("utf-8"), os.path.join(config.site_dir, asset_filename)
+        )
         config[f"extra_{asset_type}"].insert(0, asset_filename)
 
     def _add_css(self, config: MkDocsConfig, css_file: str) -> None:
