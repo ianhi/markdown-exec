@@ -93,7 +93,6 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
                 "that it is installed with the 'ansi' extra. "
                 "Install it with 'pip install markdown-exec[ansi]'.",
             )
-            
         # Save original environment variables
         self.original_env_vars = {
             "MKDOCS_CONFIG_DIR": os.getenv("MKDOCS_CONFIG_DIR"),
@@ -144,7 +143,6 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         """Reset the plugin state."""
         MarkdownConverter.counter = 0
         markdown_config.reset()
-        
         # Restore original environment variables
         for var, value in self.original_env_vars.items():
             if value is None:
