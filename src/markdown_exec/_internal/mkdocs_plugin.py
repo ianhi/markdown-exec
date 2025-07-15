@@ -37,9 +37,7 @@ class _LoggerAdapter(logging.LoggerAdapter):
         super().__init__(logger, {})
         self.prefix = prefix
 
-    def process(
-        self, msg: str, kwargs: MutableMapping[str, Any]
-    ) -> tuple[str, MutableMapping[str, Any]]:
+    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
         return f"{self.prefix}: {msg}", kwargs
 
 
@@ -54,9 +52,7 @@ patch_loggers(_get_logger)
 class MarkdownExecPluginConfig(Config):
     """Configuration of the plugin (for `mkdocs.yml`)."""
 
-    ansi = config_options.Choice(
-        ("auto", "off", "required", True, False), default="auto"
-    )
+    ansi = config_options.Choice(("auto", "off", "required", True, False), default="auto")
     """Whether the `ansi` extra is required when installing the package."""
     languages = config_options.ListOfItems(
         config_options.Choice(formatters.keys()),
@@ -144,9 +140,7 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         files: Files,  # noqa: ARG002
     ) -> Environment | None:
         """Add assets to the environment."""
-        if self.config.ansi in ("required", True) or (
-            self.config.ansi == "auto" and _ansi_ok
-        ):
+        if self.config.ansi in ("required", True) or (self.config.ansi == "auto" and _ansi_ok):
             self._add_css(config, "ansi.css")
         if "pyodide" in self.languages:
             self._add_css(config, "pyodide.css")
@@ -165,16 +159,10 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
             else:
                 os.environ[var] = value
 
-    def _add_asset(
-        self, config: MkDocsConfig, asset_file: str, asset_type: str
-    ) -> None:
+    def _add_asset(self, config: MkDocsConfig, asset_file: str, asset_type: str) -> None:
         asset_filename = f"assets/_markdown_exec_{asset_file}"
-        asset_content = (
-            Path(__file__).parent.parent.joinpath("assets", asset_file).read_text()
-        )
-        write_file(
-            asset_content.encode("utf-8"), os.path.join(config.site_dir, asset_filename)
-        )
+        asset_content = Path(__file__).parent.parent.joinpath("assets", asset_file).read_text()
+        write_file(asset_content.encode("utf-8"), os.path.join(config.site_dir, asset_filename))
         config[f"extra_{asset_type}"].insert(0, asset_filename)
 
     def _add_css(self, config: MkDocsConfig, css_file: str) -> None:

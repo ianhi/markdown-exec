@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [Unreleased](https://github.com/pawamoy/markdown-exec/compare/1.11.0...HEAD)
+
+### Features
+
+- Allow configuring auto-exec languages in mkdocs.yml ([#76](https://github.com/pawamoy/markdown-exec/issues/76))
+
 ## [1.11.0](https://github.com/pawamoy/markdown-exec/releases/tag/1.11.0) - 2025-06-28
 
 <small>[Compare with 1.10.4](https://github.com/pawamoy/markdown-exec/compare/1.10.4...1.11.0)</small>
@@ -12,7 +18,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Features
 
 - Add option to set height of Pyodide/Ace editors ([c64a2ef](https://github.com/pawamoy/markdown-exec/commit/c64a2efd8cb7a7a691039e866dab5839f8ef8bfe) by Jayant Pranjal). [Issue-41](https://github.com/pawamoy/markdown-exec/issues/41), Co-authored-by: Jayant <jayant@Jayants-MacBook-Air.local>, Co-authored-by: Timothée Mazzucotelli <dev@pawamoy.fr>
-- Allow configuring auto-exec languages in mkdocs.yml ([#76](https://github.com/pawamoy/markdown-exec/issues/76))
 
 ## [1.10.4](https://github.com/pawamoy/markdown-exec/releases/tag/1.10.4) - 2025-06-27
 
