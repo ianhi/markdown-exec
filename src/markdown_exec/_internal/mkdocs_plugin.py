@@ -67,7 +67,13 @@ class MarkdownExecPluginConfig(Config):
         (list, str),
         default=None,
     )
-    """Languages for which to automatically execute code blocks."""
+    """Languages for which to automatically execute code blocks.
+    
+    Can be specified as a list of language names or a single language name.
+    Example: ['python', 'bash'] or 'python'
+    When set, code blocks for these languages will execute automatically
+    without needing explicit exec="1" parameter.
+    """
 
 
 class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
@@ -106,7 +112,9 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         # Set MKDOCS_CONFIG_DIR
         os.environ["MKDOCS_CONFIG_DIR"] = os.path.dirname(config["config_file_path"])
 
-        # Handle auto_exec configuration
+        # Handle auto_exec configuration by setting environment variable
+        # This must be done before markdown processing begins so that
+        # the validator function can read it dynamically
         if self.config.auto_exec is not None:
             if isinstance(self.config.auto_exec, list):
                 os.environ["MARKDOWN_EXEC_AUTO"] = ",".join(self.config.auto_exec)
@@ -146,10 +154,11 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         return env
 
     def on_post_build(self, *, config: MkDocsConfig) -> None:  # noqa: ARG002
-        """Reset the plugin state."""
+        """Reset the plugin state and restore environment variables."""
         MarkdownConverter.counter = 0
         markdown_config.reset()
-        # Restore original environment variables
+        
+        # Restore original environment variables to their pre-build state
         for var, value in self.original_env_vars.items():
             if value is None:
                 os.environ.pop(var, None)
