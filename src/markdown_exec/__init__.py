@@ -11,7 +11,7 @@ from markdown_exec._internal.formatters.base import (
     working_directory,
 )
 from markdown_exec._internal.logger import get_logger, patch_loggers
-from markdown_exec._internal.main import MARKDOWN_EXEC_AUTO, formatter, formatters, validator
+from markdown_exec._internal.main import formatter, formatters, get_auto_exec_languages, validator
 from markdown_exec._internal.processors import (
     HeadingReportingTreeprocessor,
     IdPrependingTreeprocessor,
@@ -28,7 +28,6 @@ from markdown_exec._internal.rendering import (
 )
 
 __all__ = [
-    "MARKDOWN_EXEC_AUTO",
     "ExecutionError",
     "HeadingReportingTreeprocessor",
     "IdPrependingTreeprocessor",
@@ -43,6 +42,7 @@ __all__ = [
     "default_tabs",
     "formatter",
     "formatters",
+    "get_auto_exec_languages",
     "get_logger",
     "markdown_config",
     "patch_loggers",

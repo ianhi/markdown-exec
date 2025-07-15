@@ -59,6 +59,17 @@ class MarkdownExecPluginConfig(Config):
         default=list(formatters.keys()),
     )
     """Which languages to enabled the extension for."""
+    auto_exec = config_options.Type(
+        (list, str),
+        default=None,
+    )
+    """Languages for which to automatically execute code blocks.
+    
+    Can be specified as a list of language names or a single language name.
+    Example: ['python', 'bash'] or 'python'
+    When set, code blocks for these languages will execute automatically
+    without needing explicit exec="1" parameter.
+    """
 
 
 class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
@@ -88,8 +99,23 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
                 "that it is installed with the 'ansi' extra. "
                 "Install it with 'pip install markdown-exec[ansi]'.",
             )
-        self.mkdocs_config_dir = os.getenv("MKDOCS_CONFIG_DIR")
+        # Save original environment variables
+        self.original_env_vars = {
+            "MKDOCS_CONFIG_DIR": os.getenv("MKDOCS_CONFIG_DIR"),
+            "MARKDOWN_EXEC_AUTO": os.getenv("MARKDOWN_EXEC_AUTO"),
+        }
+
+        # Set MKDOCS_CONFIG_DIR
         os.environ["MKDOCS_CONFIG_DIR"] = os.path.dirname(config["config_file_path"])
+
+        # Handle auto_exec configuration by setting environment variable
+        # This must be done before markdown processing begins so that
+        # the validator function can read it dynamically
+        if self.config.auto_exec is not None:
+            if isinstance(self.config.auto_exec, list):
+                os.environ["MARKDOWN_EXEC_AUTO"] = ",".join(self.config.auto_exec)
+            else:
+                os.environ["MARKDOWN_EXEC_AUTO"] = str(self.config.auto_exec)
         self.languages = self.config.languages
         mdx_configs = config.setdefault("mdx_configs", {})
         superfences = mdx_configs.setdefault("pymdownx.superfences", {})
@@ -122,13 +148,16 @@ class MarkdownExecPlugin(BasePlugin[MarkdownExecPluginConfig]):
         return env
 
     def on_post_build(self, *, config: MkDocsConfig) -> None:  # noqa: ARG002
-        """Reset the plugin state."""
+        """Reset the plugin state and restore environment variables."""
         MarkdownConverter.counter = 0
         markdown_config.reset()
-        if self.mkdocs_config_dir is None:
-            os.environ.pop("MKDOCS_CONFIG_DIR", None)
-        else:
-            os.environ["MKDOCS_CONFIG_DIR"] = self.mkdocs_config_dir
+        
+        # Restore original environment variables to their pre-build state
+        for var, value in self.original_env_vars.items():
+            if value is None:
+                os.environ.pop(var, None)
+            else:
+                os.environ[var] = value
 
     def _add_asset(self, config: MkDocsConfig, asset_file: str, asset_type: str) -> None:
         asset_filename = f"assets/_markdown_exec_{asset_file}"

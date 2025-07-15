@@ -470,6 +470,29 @@ to the MkDocs configuration file directory, instead of relative to the current
 working directory. This will make it possible to use the `-f` option of MkDocs,
 to build the documentation from a different directory than the repository root.
 
+### Plugin Configuration Options
+
+The plugin supports the following configuration options:
+
+```yaml
+# mkdocs.yml
+plugins:
+  - search
+  - markdown-exec:
+      ansi: auto  # Whether the ansi extra is required (auto, off, required, true, false)
+      languages:  # Which languages to enable the extension for
+        - python
+        - bash
+        - sh
+        # ... etc
+      auto_exec:  # Languages for which to automatically execute code blocks
+        - python
+        - bash
+        # Or as a comma-separated string: "python,bash"
+```
+
+The `auto_exec` option allows you to configure automatic execution of code blocks for specific languages directly in your `mkdocs.yml` file, instead of using the `MARKDOWN_EXEC_AUTO` environment variable. This makes it easier for new contributors to build your documentation without having to set environment variables.
+
 Example:
 
 ```python exec="1" source="material-block"

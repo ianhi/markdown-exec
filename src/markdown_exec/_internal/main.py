@@ -18,8 +18,20 @@ from markdown_exec._internal.logger import get_logger
 if TYPE_CHECKING:
     from markdown import Markdown
 
-MARKDOWN_EXEC_AUTO = [lang.strip() for lang in os.getenv("MARKDOWN_EXEC_AUTO", "").split(",")]
-"""Languages to automatically execute."""
+def get_auto_exec_languages() -> list[str]:
+    """Get languages to automatically execute from environment variable.
+    
+    This function reads the MARKDOWN_EXEC_AUTO environment variable dynamically
+    (not at module import time) to support MkDocs plugin configuration.
+    
+    Returns:
+        List of language names that should auto-execute code blocks.
+        Empty list if MARKDOWN_EXEC_AUTO is not set or empty.
+    """
+    auto_exec = os.getenv("MARKDOWN_EXEC_AUTO", "")
+    if not auto_exec:
+        return []
+    return [lang.strip() for lang in auto_exec.split(",")]
 
 
 _logger = get_logger("markdown-exec")
@@ -61,7 +73,14 @@ def validator(
     Returns:
         Success or not.
     """
-    exec_value = language in MARKDOWN_EXEC_AUTO or _to_bool(inputs.pop("exec", "no"))
+    # Determine if code block should execute based on precedence:
+    # 1. Explicit exec parameter (exec="1", exec="off", etc.) takes priority
+    # 2. If no explicit exec, check if language is in auto-exec list
+    exec_input = inputs.pop("exec", None)
+    if exec_input is not None:
+        exec_value = _to_bool(exec_input)
+    else:
+        exec_value = language in get_auto_exec_languages()
     if language not in {"tree", "pyodide"} and not exec_value:
         return False
     id_value = inputs.pop("id", "")

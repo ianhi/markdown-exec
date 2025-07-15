@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [Unreleased](https://github.com/pawamoy/markdown-exec/compare/1.11.0...HEAD)
+
+### Features
+
+- Allow configuring auto-exec languages in mkdocs.yml ([#76](https://github.com/pawamoy/markdown-exec/issues/76))
+
 ## [1.11.0](https://github.com/pawamoy/markdown-exec/releases/tag/1.11.0) - 2025-06-28
 
 <small>[Compare with 1.10.4](https://github.com/pawamoy/markdown-exec/compare/1.10.4...1.11.0)</small>
